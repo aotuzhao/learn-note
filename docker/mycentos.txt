@@ -1,0 +1,13 @@
+FROM centos
+MAINTAINER zxzhao<zxzhao1994@126.com>
+
+ENV mypath /tmp
+WORKDIR $mypath
+
+RUN yum -y install vim
+RUN yum -y install net-tools
+
+EXPOSE 80
+CMD echo $mypath
+CMD echo "mycentos build success"
+CMD /bin/bash 
