@@ -1,0 +1,142 @@
+	
+==========================redis2.X主从配置===================================
+redis2.X主从配置
+	1、克隆2台CentOS虚拟机，并安装redis
+		1台为“主”
+		1台为”从“
+	2、”主“ ”从“两台服务器的配置同前面介绍
+	3、在“从”服务器的配置文件中添加一句配置：
+		slaveof  host  port  
+		如：slaveof 192.168.1.103 7000
+	4、重启2台服务器，测试。
+	
+	
+==========================redis3.X集群配置===================================
+
+redis3.X集群配置：
+一、克隆6台CentOS虚拟机，并安装redis
+		或
+	1台虚拟机上的 6个redis服务
+	
+二、每台服务器的配置中都增加如下信息：
+	cluster-enabled yes					  // 开启集群
+	cluster-config-file nodes-7003.conf   // 集群节点的配置文件
+	
+三、开启6个redis服务
+	redis-server /usr/local/redis/8000/8000.conf
+	redis-server /usr/local/redis/8000/8001.conf
+	redis-server /usr/local/redis/8000/8002.conf
+	redis-server /usr/local/redis/8000/8003.conf
+	redis-server /usr/local/redis/8000/8004.conf
+	redis-server /usr/local/redis/8000/8005.conf
+	
+	查看进程，确认6个redis服务都正常
+	ps -ef | grep redis
+		root      1883     1  0 19:52 ?        00:00:12 redis-server *:8000 [cluster]                
+		root      1887     1  0 19:52 ?        00:00:12 redis-server *:8001 [cluster]                
+		root      1891     1  0 19:53 ?        00:00:13 redis-server *:8002 [cluster]                
+		root      1895     1  0 19:53 ?        00:00:13 redis-server *:8003 [cluster]                
+		root      1899     1  0 19:53 ?        00:00:13 redis-server *:8004 [cluster]                
+		root      1903     1  0 19:53 ?        00:00:13 redis-server *:8005 [cluster]
+	
+四、创建redis的集群
+	1、进入redis解压目录中的src文件夹
+		cd /usr/redis-3.0.7/src
+	2、创建集群
+		./redis-trib.rb create --replicas 1 127.0.0.1:8000 127.0.0.1:8001 127.0.0.1:8002 127.0.0.1:8003 127.0.0.1:8004 127.0.0.1:8005
+                      创建集群  指定从节点的数量  每台要纳入集群管理的ip:port
+				  
+	3、根据提示信息，确认配置，输入yes 
+		....
+		完成。
+	
+	4、查看集群状态
+		1> 进入redis解压目录中的src文件夹
+			cd /usr/redis-3.0.7/src
+		2> 执行命令
+			./redis-trib.rb check 127.0.0.1:8000
+			                      集群中的任一有效节点
+		
+	4、说明
+		1> 集群中的每个node相互连接，master负责存数据，slave负责对master进行主从备份
+		2> 每个节点都有唯一的nodeID
+		3> 其中只有master主节点有slots槽(共16384个)
+		4> 所有slave从点都没有slots
+		5> 所有slave从节点都有replicates master-nodeid 代表 当前node是哪个master的从
+		
+五、使用集群环境
+	1、连接集群中的任一节点（所有node相互连接）
+		redis-cli -c -h 192.168.1.104 -p 8001
+		
+	2、存/取 数据
+		127.0.0.1:8001> set xx 11
+		-> Redirected to slot [741] located at 127.0.0.1:8000
+		根据key计算slot，再根据slot确定要存放数据的master节点，并且从当前redis服务器 redirect到 目标redis服务器。
+		......
+		127.0.0.1:8001> set xxx
+		-> Redirected to slot [5798] located at 127.0.0.1:8001
+		
+六、集群环境中的灾备
+	1、主redis宕机
+		主down机，其对应的从 会自动升级为master 并接管其所有slots
+		1> 查看集群状态
+			./redis-trib.rb check 127.0.0.1:8001
+			3主3从
+		2> 登录任一master节点
+			redis-cli -c -p 8000
+			shutdown
+		3> 查看集群状态
+			./redis-trib.rb check 127.0.0.1:8001
+			3主2从（主down，其对应的从 已自动升级为master）
+		注意：可能会有时间延迟！
+		
+	2、主redis宕机后，再启动
+		down的主机 又恢复正常，该redis成为slave
+		1> 启动被down掉的master节点
+			redis-server /usr/local/redis/8000/8000.conf
+		2> 查看集群状态
+			./redis-trib.rb check 127.0.0.1:8001
+			3主3从（down掉的master，恢复启动后，成为slave）
+		注意：可能会有时间延迟！
+	
+七、添加从节点
+	1、克隆1台CentOS虚拟机，并安装redis
+		或
+		在同1台虚拟机上再启动 1个redis服务
+	2、要求：开启集群
+	3、启动redis服务
+	4、添加到集群环境
+		./redis-trib.rb add-node --slave --master-id 7f082fc87a5fbe9979114990df285eeb824b5c1e 127.0.0.1:8006 127.0.0.1:8001
+		               添加节点    从节点    从属性的master节点   master-nodeID               新增加ip:port   集群中任一ip:port
+
+	5、查看集群状态
+		./redis-trib.rb check 127.0.0.1:8001
+		3主4从
+
+八、删除从节点
+	./redis-trib.rb del-node 127.0.0.1:8001 057dd4de3c26e5671c167b4c47ee55fb04414e23
+	               删除节点    集群中任一ip:port   要删除的nodeID  
+	提示信息如下：
+	>>> Removing node 057dd4de3c26e5671c167b4c47ee55fb04414e23 from cluster 127.0.0.1:8001
+	>>> Sending CLUSTER FORGET messages to the cluster...
+	>>> SHUTDOWN the node.
+	
+九、添加主节点
+	1、克隆1台redis，可 在现有虚拟机上 启动 1个新redis服务
+		要求：开启集群
+	2、启动redis服务
+		redis-server /usr/local/redis/8000/8008.conf
+	3、添加主节点到集群环境
+		./redis-trib.rb add-node 127.0.0.1:8008 127.0.0.1:8001
+		                添加节点  新增加ip:port  集群中任一ip:port
+		注意：添加主节点成功后，但它不持有任何slots槽，需要重新分片。
+	4、重新分片
+		1> ./redis-trib.rb reshard 127.0.0.1:8000      // 给该node所在的集群 重新分片
+		               　　重新分片  集群中任一ip:port
+		2> 根据提示输入要分出的slots的数量 如，4096
+		3> 根据提示输入要接收slots的nodeID 如，fde8404000a34e4869b6a9115024425dc664b735
+		4> 根据提示输入要从哪些node中分出这些slots 如，all -- 代表从所有现有的nodes中分
+		5> 输入yes，开始分片。
+	5、查看集群状态
+		./redis-trib.rb check 127.0.0.1:8001
+

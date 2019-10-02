@@ -1,0 +1,46 @@
+1、当前web服务集群环境中的session问题
+	server切换后 session丢失
+	
+	
+2、解决方案：
+	1) nginx提供 ip_hash          问题：单点故障       session粘着
+	2) session复制                 问题：占空间
+	3) redis提供的session共享
+	
+
+-----------
+轮循策略，切换server后， 再次回存有session的server，为什么session的数据还没获取到？
+1. 请求tomcat1，tomcat1上会创建session（唯一sessionId1），响应回来 把session存入cookie(jsessionid) 
+2. 再次请求tomcat2，带着数据+cookie到tomcat2，从cookie中获取jsesionid的值sessionId1，在tomcat2中匹配，不成功
+	于是 tomcat2会创建新session(唯一sessionId2), 响应回来 把session存入cookie(jsessionid)
+3. 再次请求 轮循回tomcat1 , 带着数据+cookie到tomcat1，从cookie中获取jsesionid的值sessionId2，在tomcat1中匹配，不成功
+	......
+
+-----------
+session的回顾：
+1、会话，同一client 与 server建立 起连接后的 多次请求 响应过程。
+2、作用域对象
+	开始：servlet-client第1次请求 遇到getSession(true)   懒汉式
+		  jsp-    client第1次请求                        饿汉式
+	结束：手动调invalidate方法、超时                  浏览器关闭 session不结束，但是 不能再使用(会话cookie失效)
+	使用：session.setAttribute("str", obj);
+		  obj = session.getAttribute("str");
+		  session.removeAttribute("str");
+3、特点
+	1) session和request 比生命周期长；
+	2) session与client浏览器（同1电脑 同1client同时打开的相同浏览器产品是1个client） 一一对应。
+4、更改超时时间
+	session.setMaxInactiveInterval(600); // 修改当前session对象的超时时间改为600秒
+	web.xml       // 修改当前应用中所有session的超时时间
+5、基于session的应用
+6、底层实现
+	基于cookie进行实现
+	
+	第1次请求，server接收请求 判断当前client是否有session，没有 则创建对应的session（唯一sessionId）
+		处理完请求后，响应client结果 的同时 把当前client的session对象以cookie的形式(名jsessionid 值sessionid maxAge<0)
+		写到client。
+	
+	以后次请求，client带着请求数据+cookie一起向server请求，server接到请求 在cookie中 找名=jsessionid的cookie
+		对应的值（sessionId），判断 sessionId是否存在，存在说明 该client是有session信息。
+	
+	

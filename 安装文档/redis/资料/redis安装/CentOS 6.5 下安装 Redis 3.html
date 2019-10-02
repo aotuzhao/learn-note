@@ -1,0 +1,71 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!-- saved from url=(0047)http://www.cnblogs.com/haoxinyue/p/3620648.html -->
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh-cn">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<title>CentOS 6.5 下安装 Redis 3</title>
+		<link id="MainCss" type="text/css" rel="stylesheet" href="./bundle-arrow.css">
+		<style type="text/css">
+			body{
+				font-weight:bold
+			}
+		</style>
+	</head>
+	<body>
+		<div id="centercontent">
+			<div id="post_detail">
+			<!--done-->
+				<div class="post">
+					<div id="cnblogs_post_body">
+						<p><b>1. 首先执行解压指令:<font size="5px">tar -zxvf redis-3.0.7.tar.gz</font></b></p>
+						<p><b>2. cd指令切到解压目录中，然后执行指令: <font size="5px">make</font></b></p>
+						<p style="margin-left:20px">执行make的时候，会出现异常：</p>
+						<p style="margin-left:20px">异常一：</p>
+						<p style="margin-left:20px">make[2]: cc: Command not found</p>
+						<p style="margin-left:20px">异常原因：没有安装gcc</p>
+						<p style="margin-left:20px">解决方案：yum install gcc</p>
+						<p style="margin-left:20px">异常二：</p>
+						<p style="margin-left:20px">zmalloc.h:51:31: error: jemalloc/jemalloc.h: No such file or directory</p>
+						<p style="margin-left:20px">异常原因：一些编译依赖或原来编译遗留出现的问题</p>
+						<p style="margin-left:20px">解决方案：make distclean。清理一下，然后再make。</p>
+						<p><b>3.在make成功以后，执行指令：<font size="5px">make test </font></b></p>
+						<p style="margin-left:20px">在make test时出现异常：</p>
+						<p style="margin-left:20px">异常一：</p>
+						<p style="margin-left:20px">couldn't execute "tclsh8.5": no such file or directory</p>
+						<p style="margin-left:20px">异常原因：没有安装tcl</p>
+						<p style="margin-left:20px">解决方案：yum install -y tcl。</p>
+						<p><b>4. 安装，执行指令：<font size="5px">make install</font></b></p>
+						<p><b>5. 安装完毕后，搭建测试配置，测试启动：</b></p>
+						<p style="margin-left:20px">第一种：前台模式，默认配置启动(默认端口6379)</p>
+						<p style="margin-left:40px">直接执行指令：<b><font size="5px">redis-server</font></b></p>
+						<p style="margin-left:20px">第二种：守护进程(后台)模式,指定配置文件启动</p>
+						<p style="margin-left:40px">在redis解压根目录中找到配置文件模板(redis.conf)，复制到如下位置：</p>
+						<p style="margin-left:60px">cp  redis.conf  /usr/local/redis/7000/7000.conf</p>
+						<p style="margin-left:40px">通过vi命令修改</p>
+						<p style="margin-left:60px">daemonize yes</p>
+						<p style="margin-left:60px">pidfile /usr/local/redis/7000/7000.pid</p>
+						<p style="margin-left:60px">logfile /usr/local/redis/7000/7000.log</p>
+						<p style="margin-left:60px">port 7000</p>
+						<p style="margin-left:60px">dir /usr/local/redis/7000</p>
+						<p style="margin-left:40px">最后运行redis：<b><font size="5px"> redis-server /usr/local/redis/7000/7000.conf</font></b></p>
+						<p><b>6. 启动后:</b></p>
+						<p style="margin-left:40px">执行指令:<b><font size="5px">redis-cli </font></b>连接端口为6379 Host为127.0.0.1的redis服务器</b><br/></p>
+						<p style="margin-left:40px">或者:<b><font size="5px">redis-cli -p 7000 -h 192.168.1.103</font>连接端口为7000 Host为192.168.1.103的redis服务器</b>
+						</p>
+						<p>7.连接了redis服务器后，可以通过<font size="5px"> shutdown </font>关闭连接</p>
+						<p>8.redis配置文件中的基本配置项:<p style="margin-left:40px">
+							port 7000   #端口<br/>
+							daemonize yes  #守护进程模式启动<br/>
+							cluster-enabled yes #是否支持集群<br/>
+							cluster-config-file nodes-7000.conf #集群配置文件名<br/>
+							pidfile /usr/local/redis/7000/redis.pid  #进程id存储位置<br/>
+							logfile /usr/local/redis/7000/redis.log  #日志文件存储位置<br/>
+							dir /usr/local/redis/7000  #工作目录<br/>
+							</p>
+						</p>
+					</div>
+				</div>
+			</div>
+		</div>
+	</body>
+</html>

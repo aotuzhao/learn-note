@@ -1,0 +1,12 @@
+1.在tomcat的lib中引入：
+    tomcat-redis-session-manage-tomcat7.jar
+	jedis-2.8.1.jar
+	commons-pool2-2.2.jar
+	
+2.在tomcat的context.xml中添加：
+    <!--  配置session由redis管理，并指定redis的ip和port -->
+	<Valve className="com.orangefunction.tomcat.redissessions.RedisSessionHandlerValve"/>
+	<Manager className="com.orangefunction.tomcat.redissessions.RedisSessionManager"
+		host = "192.168.110.135"  
+		port="8001"  
+		database="0"/>

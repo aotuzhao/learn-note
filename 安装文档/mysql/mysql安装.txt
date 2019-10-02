@@ -1,0 +1,75 @@
+一、安装
+    1 将rpm复制到linux的 /usr/local/mysql_rmp
+	2 进入 /usr/local/mysql_rmp 目录 
+		1) 安装相关依赖
+			rpm -ivh perl-*.rpm
+		2) 升级mysql库
+			rpm -Uvh mysql-libs-5.1.73-7.el6.i686.rpm
+	    3) 安装mysql
+			rpm -ivh mysql-5.1.73-7.el6.i686.rpm
+		4) 安装主要服务
+			rpm -ivh mysql-server-5.1.73-7.el6.i686.rpm
+
+====================================================================================================================
+二、mysql启动：
+  service mysqld start
+  
+  chkconfig mysqld on  //设置开机启动(可选)
+  
+====================================================================================================================
+三、mysql指令:
+	1 客户端访问：
+		mysql -u root -p   // 打开mysql客户端（默认主机为 localhost）
+			或
+		mysql -u root -h localhost -p 111
+	  
+	2 查看数据库： show databases;    //查看所有的数据库
+	3 选择数据库： use mysql ;        //选择mysql库
+	4 查看表：     show tables;       //查所有表
+	5 sql语句
+		select host,user,password from user;//查看user表中的用户信息
+
+====================================================================================================================
+四、mysql远程连接（默认不支持远程连接）:
+	1 选择mysql库： 	use mysql
+	2 查看user表中的数据： 	select host,user,password from user;
+	3 将user表中host改为 : '%'
+		delete from user where host!='localhost' or user!='root';
+		update user set host='%';
+	4 刷新权限
+		flush privileges;		//刷新权限
+	5 关闭防火墙，再次登录mysql
+  
+====================================================================================================================
+五、为mysql的root用户分配登陆密码
+	1 直接修改user表
+		use mysql
+		update user set password=password('123456');
+		
+-------------------------------
+	2 在初次开启mysql服务后：  
+		[root@mylinux mysql_rpm]# mysqladmin -u root password '123'; //设置初始密码   root@localhost
+		                      mysqladmin -u root password 'new-password'
+	3 非初次启动，修改密码：   
+		mysql>SET PASSWORD FOR 'root'@'%' = PASSWORD('123'); 
+		      set password for 'root'@'192.168.0.3' = password('abc')
+
+====================================================================================================================
+六、java中使用mysql:
+	1 导入驱动jar:  mysql-connector-java-x-bin.jar
+	2 数据库连接信息
+		driver=com.mysql.jdbc.Driver
+		url=jdbc:mysql://192.168.64.128:3306/dbname?characterEncoding=UTF-8
+		username=root
+		password=123456
+		
+	注意：mysql的默认引擎是MyISAM，是不支持事务 不支持外键
+			需要改为InnoDB，是支持事务  支持外键
+			
+====================================================================================================================
+七、mysql卸载
+	rpm -e mysql-server
+	rm  -rf /var/lib/mysql
+	重装即可
+	  此时只需要安装：rpm -ivh mysql-server.... 即可
+	

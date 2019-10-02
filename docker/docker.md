@@ -513,10 +513,50 @@ CMD ["catalina.sh", "run"]
 
 
 
+#### 3. Dockerfile 补充
 
+Docker Hub中99%的镜像都是通过base镜像安装和配置需要的软件构建出来的
 
+<img src="D:\learn-note\docker\图像9.bmp" style="zoom:80%;" />
 
+常用镜像安装略
 
+###  七 Docker镜像发布
 
+<img src="D:\learn-note\docker\图像 (7).bmp" style="zoom:80%;" />
 
- 
+镜像生成：通过Dockerfile构建镜像或者通过已有镜像的容器commit
+
+推送镜像：详见阿里云操作手册
+
+```shell
+1. 登录阿里云Docker Registry
+$ sudo docker login --username=3097594492@qq.com registry.cn-beijing.aliyuncs.com
+用于登录的用户名为阿里云账号全名，密码为开通服务时设置的密码。
+
+您可以在产品控制台首页修改登录密码。
+
+2. 从Registry中拉取镜像
+$ sudo docker pull registry.cn-beijing.aliyuncs.com/zxzhao/mycentos:[镜像版本号]
+3. 将镜像推送到Registry
+$ sudo docker login --username=3097594492@qq.com registry.cn-beijing.aliyuncs.com
+$ sudo docker tag [ImageId] registry.cn-beijing.aliyuncs.com/zxzhao/mycentos:[镜像版本号]
+$ sudo docker push registry.cn-beijing.aliyuncs.com/zxzhao/mycentos:[镜像版本号]
+请根据实际镜像信息替换示例中的[ImageId]和[镜像版本号]参数。
+
+4. 选择合适的镜像仓库地址
+从ECS推送镜像时，可以选择使用镜像仓库内网地址。推送速度将得到提升并且将不会损耗您的公网流量。
+
+如果您使用的机器位于VPC网络，请使用 registry-vpc.cn-beijing.aliyuncs.com 作为Registry的域名登录，并作为镜像命名空间前缀。
+5. 示例
+使用"docker tag"命令重命名镜像，并将它通过专有网络地址推送至Registry。
+
+$ sudo docker images
+REPOSITORY                                                         TAG                 IMAGE ID            CREATED             VIRTUAL SIZE
+registry.aliyuncs.com/acs/agent                                    0.7-dfb6816         37bb9c63c8b2        7 days ago          37.89 MB
+$ sudo docker tag 37bb9c63c8b2 registry-vpc.cn-beijing.aliyuncs.com/acs/agent:0.7-dfb6816
+使用"docker images"命令找到镜像，将该镜像名称中的域名部分变更为Registry专有网络地址。
+
+$ sudo docker push registry-vpc.cn-beijing.aliyuncs.com/acs/agent:0.7-dfb6816
+```
+
