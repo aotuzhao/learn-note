@@ -560,3 +560,25 @@ $ sudo docker tag 37bb9c63c8b2 registry-vpc.cn-beijing.aliyuncs.com/acs/agent:0.
 $ sudo docker push registry-vpc.cn-beijing.aliyuncs.com/acs/agent:0.7-dfb6816
 ```
 
+
+
+
+
+other
+
+```shell
+#安装vi
+apt-get update
+apt-get install vim -y
+apt-get install yum -y
+```
+
+
+
+
+
+### 八 Docker-Compose 服务编排
+
+
+
+### 九 Shipyard-可视化管理工具
